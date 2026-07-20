@@ -2,10 +2,13 @@
 
 **A Constraint-Preserving Framework for Evaluating Logical Consistency as a First-Class Property of Language Models**
 
-[![tests](https://github.com/YOUR_USERNAME/ConsistencyBench/actions/workflows/tests.yml/badge.svg)](https://github.com/YOUR_USERNAME/ConsistencyBench/actions/workflows/tests.yml)
+[![tests](https://github.com/ju-baer/ConsistencyBench/actions/workflows/tests.yml/badge.svg)](https://github.com/ju-baer/ConsistencyBench/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/Code%20License-MIT-blue.svg)](LICENSE)
 [![Data License: CC BY 4.0](https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey.svg)](docs/DATASET_CARD.md)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
+[![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Dataset-Hugging%20Face-orange?style=flat-square)](https://huggingface.co/datasets/jub-aer/ConsistencyBench-probes)
+[![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Dataset-Hugging%20Face-orange?style=flat-square)](https://huggingface.co/datasets/jub-aer/ConsistencyBench-interpretability)
+
 
 > Standard benchmarks measure whether a model gets the *right* answer.
 > ConsistencyBench measures whether a model gives the *same* answer to
@@ -501,9 +504,9 @@ If you use ConsistencyBench in your research, please cite:
   title  = {ConsistencyBench: A Constraint-Preserving Framework for
             Evaluating Logical Consistency as a First-Class Property of
             Language Models},
-  author = {{ConsistencyBench Contributors}},
+  author = {S M Jubaer},
   year   = {2026},
-  url    = {https://github.com/YOUR_USERNAME/ConsistencyBench}
+  url    = {https://github.com/ju-baer/ConsistencyBench}
 }
 ```
 
