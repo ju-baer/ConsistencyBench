@@ -1,0 +1,55 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.installed.cfg
+*.egg
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+
+# --- Testing / linting ---
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- ConsistencyBench data & outputs (large, regenerable — do not commit) ---
+data/checkpoints/
+data/probes/*.csv
+data/results/
+data/interpretability/*.npz
+data/interpretability/activations/
+data/hf_export/
+data/hints/
+data/intervention/
+data/profiles/
+data/scoring/
+figures/*.png
+figures/*.pdf
+tables/*.tex
+local_activations/
+
+# Keep the directory placeholders
+!data/probes/.gitkeep
+!figures/.gitkeep
+!tables/.gitkeep
+
+# --- Secrets ---
+.env
+*.key
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
