@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ConsistencyBench &mdash; The Consistency Gap</title>
+<meta name="description" content="ConsistencyBench probes logical coherence as an evaluation axis independent of accuracy: 4,500 constraint-verified probe pairs, five transformation families, 17 evaluated models.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%2314161d%22/><circle cx=%2216%22 cy=%2216%22 r=%226%22 fill=%22%23b23a2e%22/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="#top"><span class="dot"></span>ConsistencyBench</a>
+    <button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    <ul class="nav-links">
+      <li><a href="#eval-space">Why It Matters</a></li>
+      <li><a href="#families">Families</a></li>
+      <li><a href="#findings">Findings</a></li>
+      <li><a href="#leaderboard">Leaderboard</a></li>
+      <li><a href="#examples">Live Examples</a></li>
+      <li><a href="#cite">Cite</a></li>
+      <li><a href="https://github.com/YOUR_USERNAME/ConsistencyBench" target="_blank" rel="noopener">GitHub</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="hero-inner">
+    <div class="eyebrow">Preprint &middot; NeurIPS 2026</div>
+    <h1>The Consistency Gap</h1>
+    <p class="subtitle">Probing logical coherence as an independent evaluation axis for large language models.</p>
+    <p class="authors"><b>S&nbsp;M&nbsp;Jubaer</b> &middot; Notre Dame College, Dhaka</p>
+
+    <div class="badges">
+      <a class="badge primary" href="./paper.pdf" target="_blank" rel="noopener">&#128196; Read the Paper</a>
+      <a class="badge" href="https://github.com/YOUR_USERNAME/ConsistencyBench" target="_blank" rel="noopener">&#9733; GitHub Repository</a>
+      <a class="badge" href="https://huggingface.co/datasets/YOUR_USERNAME/consistencybench-results" target="_blank" rel="noopener">&#129303; Hugging Face Dataset</a>
+      <a class="badge" href="#cite">&#10078; Cite</a>
+    </div>
+
+    <div class="hero-demo">
+      <div class="hero-demo-label">Live from the dataset &mdash; a real contradiction, caught in the act</div>
+      <div id="hero-demo-slot"></div>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">17</div><div class="lbl">models evaluated</div></div>
+      <div class="hero-stat"><div class="num">4,500</div><div class="lbl">probe pairs</div></div>
+      <div class="hero-stat"><div class="num">5</div><div class="lbl">transformation families</div></div>
+      <div class="hero-stat"><div class="num">83.4%</div><div class="lbl">real-world failure coverage</div></div>
+      <div class="hero-stat"><div class="num">&kappa;=0.81</div><div class="lbl">human inter-annotator agreement</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ ABSTRACT ============ -->
+<section id="abstract">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">Abstract</div>
+      <h2>Getting the right answer isn&rsquo;t the same as being coherent.</h2>
+    </div>
+    <div class="grid-2">
+      <p style="font-size:1.05rem;color:var(--text-dim);">
+        Current LLM evaluation measures whether models answer individual questions correctly. We argue this is
+        structurally incomplete: <b style="color:var(--text)">logical consistency</b> &mdash; the invariance of a model&rsquo;s
+        responses under truth-preserving logical transformations &mdash; is a behaviorally independent property that
+        single-question benchmarks cannot measure by construction. We formalize this through a theory of
+        constraint-preserving transformations, derive a principled taxonomy of five transformation families from
+        first principles, and introduce <b style="color:var(--text)">ConsistencyBench</b>, a framework for measuring
+        consistency as a first-class evaluation axis.
+      </p>
+      <p style="font-size:1.05rem;color:var(--text-dim);">
+        ConsistencyBench comprises a formal theory grounded in operator-theoretic definitions; <b style="color:var(--text)">ProbeGen</b>,
+        a four-stage constraint-driven probe synthesis pipeline that difficulty-calibrates probes through semantic
+        distance maximization rather than ad-hoc prompting; a dataset of 4,500 probe pairs across five families,
+        three domains, and three difficulty levels; a novel <b style="color:var(--text)">Consistency Profile</b> that gives
+        every model a multi-dimensional fingerprint rather than a single score; and an empirical evaluation of 17
+        frontier models spanning closed-source, open-weight, and reasoning-specialized paradigms.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EVALUATION SPACE ============ -->
+<section id="eval-space" class="dim">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">01 &middot; Why single-question benchmarks miss this</div>
+      <h2>Accuracy and consistency are two independent axes</h2>
+      <p class="lede">Every major benchmark asks: given a question, is the answer right? That is a property of one
+      response. Consistency is a property of the <i>relationship</i> between two responses to logically related
+      prompts &mdash; it cannot be seen by asking one question at a time, no matter how many questions you ask.</p>
+    </div>
+    <div class="axes-grid">
+      <div>
+        <div class="axes-compare">
+          <div class="row acc">
+            <div class="k">Accuracy</div>
+            <div class="v">Does <span class="mono">M(q) = a*</span>? A pointwise property of one prompt&rarr;response mapping. This is what MMLU, GSM8K, MATH, and HELM measure.</div>
+          </div>
+          <div class="row con">
+            <div class="k">Consistency</div>
+            <div class="v">Does <span class="mono">C&#7524;(M(p), M(T(p))) = &#8868;</span>? A property of the pair &mdash; holds or fails <i>regardless of whether either answer is true</i>.</div>
+          </div>
+        </div>
+        <p style="color:var(--text-dim); font-size:.95rem;">Across the 16 models with published MMLU scores, <b>Kendall&rsquo;s
+        &tau; = &minus;0.32 (p = 0.076, n.s.)</b> between accuracy and inconsistency rate. Spearman&rsquo;s &rho; = &minus;0.49
+        reaches significance (p = 0.048); an OLS fit does not (p = 0.123). The honest reading: a modest negative
+        trend that is not robust across tests &mdash; accuracy is <i>largely, but not perfectly,</i> independent of
+        consistency.</p>
+        <div class="legend-row">
+          <span class="li"><span class="legend-swatch" style="background:var(--indigo)"></span>Standard model</span>
+          <span class="li"><span class="legend-swatch" style="background:var(--f-equivalence);clip-path:polygon(50% 0,0 100%,100% 100%)"></span>Reasoning-specialized model</span>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div id="evalspace_svg"></div>
+        <div class="chart-caption">MMLU accuracy vs. consistency score (100&nbsp;&minus;&nbsp;IR%), 16 models with published MMLU. Source: Table 3 &amp; Table 4.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FIVE FAMILIES ============ -->
+<section id="families">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">02 &middot; Theory</div>
+      <h2>Five transformation families, derived from first principles</h2>
+      <p class="lede">Not a list of intuitive failure modes &mdash; the five families are the operations on propositions
+      and binary relations from classical logic and relation theory that are truth-preserving, expressible as
+      natural-language prompt pairs, and verifiable without full semantic parsing. Together they cover
+      <b>83.4%</b> of 500 annotated real-world LLM logical failures.</p>
+    </div>
+    <div class="fam-grid">
+
+      <div class="fam-card">
+        <div class="bar" style="background:var(--f-composition)"></div>
+        <div class="body">
+          <h3><span class="fdot composition"></span>Composition</h3>
+          <div class="basis">Relation composition (transitivity)</div>
+          <div class="constraint">A&rArr;B, B&rArr;C &rArr; A&rArr;C</div>
+          <div class="probe-line"><b>p&#7488;</b> establishes A&rArr;B</div>
+          <div class="probe-line"><b>p&#7495;</b> queries A&rArr;C, given B&rArr;C</div>
+          <div class="cov"><span>Coverage</span><span class="pct">18.4%</span></div>
+        </div>
+      </div>
+
+      <div class="fam-card">
+        <div class="bar" style="background:var(--f-reversal)"></div>
+        <div class="body">
+          <h3><span class="fdot reversal"></span>Reversal</h3>
+          <div class="basis">Symmetric relation reversal</div>
+          <div class="constraint">rel(X,Y) &hArr; rel(Y,X)</div>
+          <div class="probe-line"><b>p&#7488;</b> queries rel(X, Y)</div>
+          <div class="probe-line"><b>p&#7495;</b> queries rel(Y, X)</div>
+          <div class="cov"><span>Coverage</span><span class="pct">14.2%</span></div>
+        </div>
+      </div>
+
+      <div class="fam-card">
+        <div class="bar" style="background:var(--f-complement)"></div>
+        <div class="body">
+          <h3><span class="fdot complement"></span>Complement</h3>
+          <div class="basis">Truth complement (negation)</div>
+          <div class="constraint">&not;(assert(P) &and; assert(&not;P))</div>
+          <div class="probe-line"><b>p&#7488;</b> asserts P</div>
+          <div class="probe-line"><b>p&#7495;</b> queries &not;P (equivalent negation)</div>
+          <div class="cov"><span>Coverage</span><span class="pct">28.6%</span></div>
+        </div>
+      </div>
+
+      <div class="fam-card">
+        <div class="bar" style="background:var(--f-ordering)"></div>
+        <div class="body">
+          <h3><span class="fdot ordering"></span>Ordering</h3>
+          <div class="basis">Asymmetric temporal ordering</div>
+          <div class="constraint">before(A,B) &hArr; after(B,A)</div>
+          <div class="probe-line"><b>p&#7488;</b> queries before(A, B)</div>
+          <div class="probe-line"><b>p&#7495;</b> queries after(B, A)</div>
+          <div class="cov"><span>Coverage</span><span class="pct">10.8%</span></div>
+        </div>
+      </div>
+
+      <div class="fam-card">
+        <div class="bar" style="background:var(--f-equivalence)"></div>
+        <div class="body">
+          <h3><span class="fdot equivalence"></span>Equivalence</h3>
+          <div class="basis">Semantic equivalence preservation</div>
+          <div class="constraint">equiv(p&#7488;,p&#7495;) &rArr; compat(r&#7488;,r&#7495;)</div>
+          <div class="probe-line"><b>p&#7488;</b> surface form 1 of &phi;</div>
+          <div class="probe-line"><b>p&#7495;</b> surface form 2 (distance-maximized)</div>
+          <div class="cov"><span>Coverage</span><span class="pct">11.4%</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROBEGEN PIPELINE ============ -->
+<section class="dim">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">03 &middot; Method</div>
+      <h2>ProbeGen: constraint-driven probe synthesis</h2>
+      <p class="lede">Difficulty is not an arbitrary label &mdash; it is <span class="mono">&delta; = 0.4&middot;d<sub>lex</sub>
+      + 0.4&middot;d<sub>sem</sub> + 0.2&middot;d<sub>syn</sub></span>, a measurable semantic distance between prompt A and
+      prompt B, targeted directly during generation and re-verified afterward.</p>
+    </div>
+    <div class="pipeline">
+      <div class="pipe-stage">
+        <div class="pipe-num">STAGE 1</div>
+        <h4>Constraint Specification</h4>
+        <p>Pure logic, no LLM call. A constraint graph G = (V, E, C) is built from the transformation family, domain, and target difficulty.</p>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">STAGE 2</div>
+        <h4>Semantic Instantiation</h4>
+        <p>Gemini 2.5 Pro (excluded from evaluation) instantiates the graph into two standalone, self-contained natural-language prompts.</p>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">STAGE 3</div>
+        <h4>Difficulty Calibration</h4>
+        <p>Maximizes lexical &amp; semantic distance &delta; between prompt A and B while the logical constraint is preserved.</p>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">STAGE 4</div>
+        <h4>Constraint Verification</h4>
+        <p>5 automated checks (validity, preservation, type, scorability, dedup). Failing probes are rejected &amp; regenerated &mdash; 4.2% overall rejection rate.</p>
+      </div>
+    </div>
+    <p class="small-print">Human validation on 300 sampled probes: Cohen&rsquo;s &kappa; = 0.81, Krippendorff&rsquo;s &alpha; = 0.79. Per-family agreement highest for Ordering (94.2%), lowest for Equivalence (79.3%). Cross-judge robustness (re-scoring 400 LJS probes with GPT-4o as an alternative judge): &kappa; = 0.86.</p>
+  </div>
+</section>
+
+<!-- ============ FINDINGS ============ -->
+<section id="findings">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">04 &middot; Results</div>
+      <h2>Seven findings from 17 models &times; 4,500 probe pairs</h2>
+      <p class="lede">Reported candidly, including a negative result and the limitations of each claim &mdash; see the paper for full statistical detail.</p>
+    </div>
+
+    <div class="findings">
+
+      <div class="finding">
+        <div class="fnum">01</div>
+        <div class="finding-content">
+          <h3>Consistency failures are widespread but moderate <span class="stat-chip">mean IR 9.0%</span></h3>
+          <p>Overall IR ranges from <b>4.2%</b> (Claude 4.5 Opus, best) to <b>14.2%</b> (GPT-4o mini, worst), mean 9.0%, median 9.1%.
+          Every model fails on at least 1-in-24 probe pairs; the best-to-worst spread exceeds 3&times;. A &chi;&sup2; test
+          confirms IR is non-uniform across models (&chi;&sup2;(16)=106.8, p=1.85&times;10&#8315;&sup1;&#8309;).</p>
+          <div class="stat-row">
+            <div class="stat-box"><div class="v">4.2%&ndash;14.2%</div><div class="k">RANGE</div></div>
+            <div class="stat-box"><div class="v">9.0%</div><div class="k">MEAN</div></div>
+            <div class="stat-box"><div class="v">&gt;3&times;</div><div class="k">BEST/WORST SPREAD</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="fnum">02</div>
+        <div class="finding-content">
+          <h3>IR&rsquo;s relation to accuracy is weak and test-dependent <span class="stat-chip">&tau;=&minus;0.32, n.s.</span></h3>
+          <p>Kendall&rsquo;s &tau; = &minus;0.32 (p=0.076) does not reach significance; Spearman&rsquo;s &rho; = &minus;0.49 (p=0.048) does;
+          an OLS fit gives r = &minus;0.39 (p=0.123, n.s.). The sign is consistently negative, but not robust across
+          tests &mdash; outliers like Phi-4 (moderate MMLU, only middling IR) keep the relationship well short of
+          predictive. Accuracy alone is not a reliable proxy for consistency. See the chart in &sect;01 above.</p>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="fnum">03</div>
+        <div class="finding-content">
+          <h3>Family difficulty is moderately consistent across models <span class="stat-chip">mean &rho;=0.57</span></h3>
+          <p>Averaged across all 17 models: <b>Equivalence (12.8%) &gt; Reversal (11.8%) &gt; Complement (7.0%) &gt;
+          Ordering (2.3%) &gt; Composition (1.5%)</b>. Paraphrase-based and reordering probes are hardest; simple
+          conjunctions and element reordering are comparatively easy. The ranking is directional, not rigid &mdash;
+          pairwise Spearman correlation between any two models&rsquo; 5-family IR vectors ranges 0.05&ndash;1.00 across 136
+          model pairs. Qwen3-235B (40% IR on Equivalence alone) deviates sharply from the population trend.</p>
+          <div class="finding-chart"><div class="chart-card"><div id="family_bar_svg"></div></div></div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="fnum">04</div>
+        <div class="finding-content">
+          <h3>No robust family-specific effect of reasoning training <span class="stat-chip neg-chip">negative result</span></h3>
+          <p>Two architecture-matched pairs (DeepSeek R1 vs. V3; o4-mini vs. GPT-4o mini) <b>disagree in sign on three
+          of five families</b>. A group-level test (3 reasoning-labeled models vs. 14 others) shows no significant
+          difference in any family (Mann-Whitney p&gt;0.14 throughout). Claims that reasoning training selectively
+          fixes chain-following failure types are not supported by this dataset.</p>
+          <div class="finding-chart">
+            <div class="chart-card">
+              <div id="finding4_svg"></div>
+              <div class="legend-row">
+                <span class="li"><span class="legend-swatch" style="background:var(--f-composition);border-radius:3px;"></span>DeepSeek R1 &minus; DeepSeek V3</span>
+                <span class="li"><span class="legend-swatch" style="background:var(--f-equivalence);border-radius:3px;"></span>o4-mini &minus; GPT-4o mini</span>
+              </div>
+              <div class="chart-caption">&Delta;IR in percentage points (reasoning model &minus; base model). Equivalence omitted &mdash; insufficient paired samples to report honestly.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="fnum">05</div>
+        <div class="finding-content">
+          <h3>Ethics domain exposes the deepest inconsistency <span class="stat-chip">+14.4pp, p&lt;10&#8315;&#8310;</span></h3>
+          <p>Ethics probes show higher IR than science probes for <b>every one of the 17 models</b>, mean gap 14.4
+          percentage points (range 8.4&ndash;18.8pp). Paired t=18.9, p&lt;10&#8315;&#8310;; one-sided Wilcoxon agrees
+          (p&lt;0.0001). The largest and most statistically robust effect in the study &mdash; attributed to the
+          absence of stable internal representations for normative claims, unlike factual science content.</p>
+          <div class="finding-chart"><div class="chart-card"><div id="domain_bar_svg"></div></div></div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="fnum">06</div>
+        <div class="finding-content">
+          <h3>Consistency Profiles reveal model-specific structure <span class="stat-chip">IR&harr;CCS &tau;=0.007, n.s.</span></h3>
+          <p>The aggregate IR number hides real structure: Qwen3-235B spikes to 40% IR on Equivalence alone despite
+          9.3% overall IR; GPT-4o mini is broadly elevated across Reversal, Complement, and Ordering; Claude 4.5
+          Opus and Sonnet are the only two models with 0% IR on more than one family simultaneously. IR and CCS
+          (whether a model&rsquo;s confidence predicts its own inconsistency) are statistically independent &mdash; two
+          separate reliability axes, not two views of one number.</p>
+          <div class="finding-chart"><div class="chart-card"><div id="irccs_svg"></div><div class="chart-caption">Inconsistency rate vs. Consistency-Calibration Score, all 17 models. Lower CCS = better calibrated.</div></div></div>
+        </div>
+      </div>
+
+      <div class="finding">
+        <div class="fnum">07</div>
+        <div class="finding-content">
+          <h3>Plain Self-Check beats the fancier targeted variant <span class="stat-chip">&minus;78% relative, best case</span></h3>
+          <p>Self-Check (show the model its own prior answer) &mdash; not Family-Targeted Self-Check &mdash; gave the
+          largest reductions observed: <b>&minus;78.3%</b> relative for DeepSeek R1, <b>&minus;58.7%</b> for Llama 4
+          Maverick. FTSC recovers only part of that gain. GPT-4o was not helped by <i>any</i> intervention tested.
+          Tested on only 3 models &mdash; read as &ldquo;true for these three,&rdquo; not yet a general claim.</p>
+          <div class="finding-chart">
+            <div class="chart-card">
+              <div id="intervention_svg"></div>
+              <div class="legend-row">
+                <span class="li"><span class="legend-swatch" style="background:#b9b6a8;border-radius:3px;"></span>Baseline</span>
+                <span class="li"><span class="legend-swatch" style="background:#d69a5a;border-radius:3px;"></span>+CR</span>
+                <span class="li"><span class="legend-swatch" style="background:var(--consistent);border-radius:3px;"></span>+SC</span>
+                <span class="li"><span class="legend-swatch" style="background:var(--indigo);border-radius:3px;"></span>+FTSC</span>
+              </div>
+            </div>
+          </div>
+          <div class="ladder">
+            <div class="ladder-step"><div class="name">BASELINE</div><p>Standard system prompt, unmodified.</p></div>
+            <div class="ladder-step"><div class="name">+CR</div><p>Consistency Reminder &mdash; one added sentence noting related questions may follow.</p></div>
+            <div class="ladder-step"><div class="name">+SC</div><p>Self-Check &mdash; response A is shown as context before answering prompt B.</p></div>
+            <div class="ladder-step"><div class="name">+FTSC</div><p>Family-Targeted Self-Check &mdash; SC, plus the model is told exactly which logical relationship connects the two prompts.</p></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ LEADERBOARD ============ -->
+<section id="leaderboard" class="dim">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">05 &middot; Leaderboard</div>
+      <h2>Inconsistency rate by model and family</h2>
+      <p class="lede">Sort any column. Cell shading is a per-column heat scale (darker = more inconsistent).</p>
+    </div>
+    <div class="lb-wrap">
+      <table class="lb">
+        <thead id="lb-head">
+          <tr>
+            <th data-key="name">Model <span class="arrow"></span></th>
+            <th data-key="paradigm">Paradigm <span class="arrow"></span></th>
+            <th data-key="overall">Overall IR <span class="arrow">&darr;</span></th>
+            <th data-key="comp">Comp. <span class="arrow"></span></th>
+            <th data-key="rev">Rev. <span class="arrow"></span></th>
+            <th data-key="compl">Compl. <span class="arrow"></span></th>
+            <th data-key="ord_">Ord. <span class="arrow"></span></th>
+            <th data-key="equiv">Equiv. <span class="arrow"></span></th>
+            <th data-key="ccs">CCS <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+    </div>
+    <div class="lb-note">IR in %, lower is better. CCS = Consistency-Calibration Score (lower = better calibrated). GLM-5.2&rsquo;s paradigm and MMLU were not reported in Table 3 of the paper. Source: Table 4 &amp; Table 7.</div>
+  </div>
+</section>
+
+<!-- ============ LIVE EXAMPLES ============ -->
+<section id="examples">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">06 &middot; Explore the data</div>
+      <h2>Live examples from the released results</h2>
+      <p class="lede">132 real probe pairs sampled from the public <span class="mono">consistencybench-results</span>
+      export &mdash; actual prompts and actual model responses, mostly caught contradicting themselves, with a few
+      consistent pairs for contrast. Filter, click a card to read the full exchange.</p>
+    </div>
+
+    <div class="filters">
+      <div class="filter-field">
+        <label for="filter-family">Family</label>
+        <select id="filter-family"><option value="">All families</option></select>
+      </div>
+      <div class="filter-field">
+        <label for="filter-model">Model</label>
+        <select id="filter-model"><option value="">All models</option></select>
+      </div>
+      <div class="filter-field">
+        <label for="filter-domain">Domain</label>
+        <select id="filter-domain"><option value="">All domains</option></select>
+      </div>
+      <div class="filter-field">
+        <label for="filter-verdict">Verdict</label>
+        <select id="filter-verdict">
+          <option value="">All verdicts</option>
+          <option value="inconsistent">Inconsistent only</option>
+          <option value="consistent">Consistent only</option>
+        </select>
+      </div>
+      <div class="filter-spacer"></div>
+      <button class="btn" id="shuffle-btn">&#8635; Shuffle</button>
+      <button class="btn primary" id="reset-btn">Reset filters</button>
+    </div>
+
+    <div class="results-meta" id="ex-results-meta"></div>
+    <div class="ex-grid" id="ex-grid"></div>
+  </div>
+</section>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+    <div id="modal-inner"></div>
+  </div>
+</div>
+
+<!-- ============ LIMITATIONS ============ -->
+<section class="dim">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">07 &middot; Reported candidly</div>
+      <h2>Limitations</h2>
+    </div>
+    <div class="limit-box">
+      <ul>
+        <li><b>Intervention coverage.</b> Only 3 of 17 models were tested under intervention (DeepSeek R1, GPT-4o, Llama 4 Maverick). The SC-over-FTSC result is true for these three, not yet a general claim.</li>
+        <li><b>Reasoning-training group size.</b> The reasoning-vs-non-reasoning comparison has n=3 in the reasoning group. A true moderate effect would likely fail to reach significance at this size &mdash; the honest reading is &ldquo;no effect detected,&rdquo; not &ldquo;no effect exists.&rdquo;</li>
+        <li><b>Equivalence family has the lowest inter-annotator agreement</b> (79.3%) &mdash; it requires semantic judgment rather than a purely rule-based check.</li>
+        <li><b>Difficulty-stratified analysis is not yet included</b> pending the raw per-probe difficulty export needed to reproduce it honestly.</li>
+        <li><b>Probes are LLM-generated</b> (mitigated by a separate, excluded generator model, human validation, and cross-judge robustness checks) &mdash; not sourced from real user data.</li>
+        <li><b>English-only</b> in the current release; multilingual probes, multi-hop chains, and modal/probabilistic reasoning are noted as future work.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CITE ============ -->
+<section id="cite" class="cite-section">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-eyebrow">Cite this work</div>
+      <h2>BibTeX</h2>
+      <p class="lede">If ConsistencyBench is useful in your research, please cite the paper.</p>
+    </div>
+    <div class="bibtex">
+      <button class="copy-btn" id="copy-bibtex">Copy</button>
+      <div id="bibtex-text">@misc{jubaer2026consistencygap,
+  title  = {The Consistency Gap: Probing Logical Coherence as an
+            Independent Evaluation Axis for Large Language Models},
+  author = {Jubaer, S M},
+  year   = {2026},
+  note   = {Preprint},
+  url    = {https://github.com/YOUR_USERNAME/ConsistencyBench}
+}</div>
+    </div>
+    <div class="cite-links">
+      <a href="./paper.pdf" target="_blank" rel="noopener">Paper (PDF)</a>
+      <a href="https://github.com/YOUR_USERNAME/ConsistencyBench" target="_blank" rel="noopener">Code</a>
+      <a href="https://huggingface.co/datasets/YOUR_USERNAME/consistencybench-results" target="_blank" rel="noopener">Dataset</a>
+      <a href="mailto:smjubaer.0.00@gmail.com">Contact the author</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fnote">ConsistencyBench &middot; Notre Dame College, Dhaka &middot; Code released under MIT, dataset released under CC&nbsp;BY&nbsp;4.0. Page built with the paper&rsquo;s own published tables &mdash; no numbers here were re-estimated.</div>
+    <div><a href="#top">Back to top &uarr;</a></div>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
