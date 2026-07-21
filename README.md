@@ -116,7 +116,7 @@ This repository is a full research pipeline, structured for both
    interpretability bundle, each with an auto-generated dataset card).
 
 The original, single-notebook version of this project is preserved at
-[`notebooks/ConsistencyBench_NeurIPS2026.ipynb`](notebooks/ConsistencyBench_NeurIPS2026.ipynb)
+[`notebooks/ConsistencyBench.ipynb`](notebooks/ConsistencyBench.ipynb)
 — the easiest way to run everything interactively cell-by-cell on Google
 Colab. Everything in `src/consistencybench/` is the *same logic*, refactored
 into an importable, individually testable Python package, with the notebook
@@ -133,7 +133,7 @@ ConsistencyBench/
 ├── requirements.txt                   flat pip-installable dependency list
 │
 ├── notebooks/
-│   └── ConsistencyBench_NeurIPS2026.ipynb   the original, canonical, cell-by-cell notebook
+│   └── ConsistencyBench.ipynb   the original, canonical, cell-by-cell notebook
 │
 ├── src/consistencybench/              the same logic, as an importable package
 │   ├── config.py                          model roster, families, costs, run params
@@ -186,7 +186,7 @@ ConsistencyBench/
 ## Quickstart
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ConsistencyBench.git
+git clone https://github.com/ju-baer/ConsistencyBench.git
 cd ConsistencyBench
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"                 # Part A + testing, no torch
@@ -393,7 +393,7 @@ python scripts/05_run_interpretability.py    # needs a GPU for reasonable runtim
 Two equally valid ways to reproduce or extend this work:
 
 - **Interactively, cell-by-cell**: open
-  `notebooks/ConsistencyBench_NeurIPS2026.ipynb` in Colab (free-tier T4 is
+  `notebooks/ConsistencyBench.ipynb` in Colab (free-tier T4 is
   sufficient for Part B), set `OPENROUTER_API_KEY` in Colab Secrets, run
   cells in order. This is the original, canonical narrative of the project.
 - **As a pipeline, stage-by-stage or all at once**: use `scripts/`, as in
